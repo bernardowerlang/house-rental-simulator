@@ -58,19 +58,19 @@ export const calculateProlaboreIRPF = (monthlyProlabore: number, monthlyINSS: nu
 };
 
 export const calculateProlaboreTaxes = (totalRevenue: number, numberOfInvoices: number) => {
-  // Valor por nota (receita total dividida pelo número de notas)
+  // Value per invoice (total revenue divided by number of invoices)
   const revenuePerInvoice = totalRevenue / numberOfInvoices;
   
-  // Pro-labore por nota (28% do valor da nota)
+  // Pro-labore per invoice (28% of invoice value)
   const prolaborePerInvoice = revenuePerInvoice * TAX_CONSTANTS.PROLABORE_PERCENTAGE;
   
-  // Calcular INSS por nota usando faixas progressivas
+  // Calculate INSS per invoice using progressive brackets
   const inssPerInvoice = calculateINSS(prolaborePerInvoice);
   
-  // Calcular IRPF por nota (sobre o valor líquido)
+  // Calculate IRPF per invoice (on net value)
   const irpfPerInvoice = calculateProlaboreIRPF(prolaborePerInvoice, inssPerInvoice);
   
-  // Totais do período
+  // Period totals
   const totalINSS = inssPerInvoice * numberOfInvoices;
   const totalIRPF = irpfPerInvoice * numberOfInvoices;
   const totalProlabore = prolaborePerInvoice * numberOfInvoices;
@@ -80,14 +80,14 @@ export const calculateProlaboreTaxes = (totalRevenue: number, numberOfInvoices: 
     inss: totalINSS,
     irpf: totalIRPF,
     totalTax: totalINSS + totalIRPF,
-    // Dados adicionais para exibição
+    // Additional data for display
     breakdown: {
-      prolaborePerInvoice: prolaborePerInvoice, // Valor do pro-labore por nota
-      monthlyProlaborePerInvoice: prolaborePerInvoice, // Mesmo valor (agora por nota, não por mês)
-      inssPerInvoice: inssPerInvoice, // INSS por nota
-      irpfPerInvoice: irpfPerInvoice, // IRPF por nota
-      monthlyINSSPerInvoice: inssPerInvoice, // Mesmo valor (agora por nota, não por mês)
-      monthlyIRPFPerInvoice: irpfPerInvoice, // Mesmo valor (agora por nota, não por mês)
+      prolaborePerInvoice: prolaborePerInvoice, // Pro-labore value per invoice
+      monthlyProlaborePerInvoice: prolaborePerInvoice, // Same value (now per invoice, not per month)
+      inssPerInvoice: inssPerInvoice, // INSS per invoice
+      irpfPerInvoice: irpfPerInvoice, // IRPF per invoice
+      monthlyINSSPerInvoice: inssPerInvoice, // Same value (now per invoice, not per month)
+      monthlyIRPFPerInvoice: irpfPerInvoice, // Same value (now per invoice, not per month)
     }
   };
 };

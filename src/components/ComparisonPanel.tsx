@@ -39,7 +39,7 @@ export const ComparisonPanel: React.FC<ComparisonPanelProps> = ({
 
       {/* Comparison Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Pessoa Física Card */}
+        {/* Individual Person Card */}
         <div className={`bg-white rounded-xl shadow-xl p-8 border-2 ${
           results.bestOption === 'pf' ? 'border-green-400 ring-4 ring-green-100' : 'border-gray-200'
         }`}>
@@ -96,7 +96,7 @@ export const ComparisonPanel: React.FC<ComparisonPanelProps> = ({
           </div>
         </div>
 
-        {/* Pessoa Jurídica Card */}
+        {/* Corporate Card */}
         <div className={`bg-white rounded-xl shadow-xl p-8 border-2 ${
           results.bestOption === 'pj' ? 'border-purple-400 ring-4 ring-purple-100' : 'border-gray-200'
         }`}>

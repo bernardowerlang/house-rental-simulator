@@ -14,13 +14,13 @@ export const useRentalCalculations = (data: RentalData) => {
     const totalGrossIncome = data.monthlyRent * data.rentalPeriod;
     const totalCosts = data.alternativeHousingCost + (data.monthlyCosts * data.rentalPeriod);
 
-    // Pessoa Física (Imposto Progressivo)
+    // Individual Person (Progressive Tax)
     const monthlyPFTax = calculatePFTax(data.monthlyRent, data.monthlyDeductions);
     const totalPFTax = monthlyPFTax * data.rentalPeriod;
     const pfNetIncome = totalGrossIncome - totalPFTax;
     const pfFinalProfit = pfNetIncome - totalCosts;
 
-    // Pessoa Jurídica (Simples Nacional 6% + Pró-labore)
+    // Corporate (Simples Nacional 6% + Pro-labore)
     const simplesNacionalTax = totalGrossIncome * TAX_CONSTANTS.SIMPLES_NACIONAL_RATE;
     const prolaboreTaxes = calculateProlaboreTaxes(totalGrossIncome, data.numberOfInvoices);
     const totalPJTax = simplesNacionalTax + prolaboreTaxes.totalTax;
