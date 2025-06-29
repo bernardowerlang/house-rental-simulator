@@ -32,6 +32,10 @@ export const translations = {
     totalGrossRevenue: "Receita Bruta Total:",
     totalCosts: "Custos Totais:",
     beforeTaxes: "Antes dos Impostos:",
+    costsBreakdown: "💸 Detalhamento dos Custos:",
+    alternativeHousing: "Moradia Alternativa:",
+    propertyFixedCosts: "Custos Fixos do Imóvel:",
+    monthlyCostDetail: "R$/mês × {months} meses",
     
     // Comparison Results
     bestOption: "Melhor Opção:",
@@ -108,6 +112,10 @@ export const translations = {
     totalGrossRevenue: "Total Gross Revenue:",
     totalCosts: "Total Costs:",
     beforeTaxes: "Before Taxes:",
+    costsBreakdown: "💸 Costs Breakdown:",
+    alternativeHousing: "Alternative Housing:",
+    propertyFixedCosts: "Property Fixed Costs:",
+    monthlyCostDetail: "$/month × {months} months",
     
     // Comparison Results
     bestOption: "Best Option:",
