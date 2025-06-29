@@ -7,17 +7,21 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "preview": "vite preview"
   },
-  "keywords": ["react", "typescript", "rental", "calculator", "simulator"],
+  "keywords": [
+    "react",
+    "typescript",
+    "rental",
+    "calculator",
+    "simulator"
+  ],
   "author": "Bernardo Werlang",
   "license": "MIT",
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "lucide-react": "^0.263.1",
-    "recharts": "^2.8.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.15",
