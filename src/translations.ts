@@ -9,6 +9,8 @@ export const translations = {
     // Navigation
     inputData: "📝 Dados de Entrada",
     comparison: "📊 Comparativo PF vs PJ",
+    viabilityAnalysis: "💰 Análise de Viabilidade",
+    negotiationHelper: "🤝 Ajuda p/ Negociação",
     
     // Input Form
     simulationData: "Dados da Simulação",
@@ -26,6 +28,8 @@ export const translations = {
     individualOnly: "Apenas para Pessoa Física",
     monthlyDeductions: "📋 Deduções Mensais (R$/mês)",
     deductionsHelper: "Despesas dedutíveis: IPTU, condomínio, reformas, depreciação, etc.",
+    minimumDesiredProfit: "💰 Lucro Mínimo Desejado (R$) *",
+    minimumDesiredProfitHelper: "Menor lucro que você quer ter ao final do período",
     
     // Quick Summary
     quickSummary: "📋 Resumo Rápido:",
@@ -47,9 +51,9 @@ export const translations = {
     taxCalculation: "📊 Cálculo do Imposto",
     taxBase: "Base de cálculo:",
     monthlyTax: "Imposto mensal:",
-    progressiveTable: "Regime: Carnê-Leão (Tabela Progressiva)",
-    corporateRate: "Alíquota: 6% (Simples Nacional) + Pró-labore",
-    corporateRegime: "Regime: Simples Nacional - Anexo III + Impostos sobre Pró-labore",
+    progressiveTable: "Método: Tabela Progressiva IRPF (2025)",
+    corporateRate: "Taxa: 6% (Simples Nacional) + Pró-labore (INSS/IRPF 2025)",
+    corporateRegime: "Método: Simples Nacional + Impostos do Pró-labore",
     
     totalTax: "💸 Imposto Total",
     netRevenue: "💰 Receita Líquida",
@@ -65,13 +69,65 @@ export const translations = {
     
     // Recommendations
     recommendations: "💡 Recomendações",
-    individualBetter: "✅ Pessoa Física é mais vantajosa: Com as deduções informadas, a tributação progressiva do Carnê-Leão resulta em menor imposto.",
+    individualBetter: "✅ Pessoa Física é mais vantajosa: Com as deduções informadas, a tributação progressiva resulta em menor imposto.",
     corporateBetter: "✅ Pessoa Jurídica é mais vantajosa: Mesmo com o pró-labore (28% do faturamento) e seus impostos (INSS + IRPF), a opção PJ ainda é mais eficiente neste cenário.",
     corporateReminder: "📋 Lembre-se: Para PJ, considere também custos de abertura, contabilidade (~R$ 200-500/mês), obrigações fiscais e que 28% do faturamento será pró-labore (sujeito a INSS e IRPF).",
     consultAccountant: "⚖️ Consulte um contador: Esta simulação é apenas orientativa. Cada situação é única e requer análise profissional.",
     
+    // Negotiation Helper
+    negotiationHelperTitle: "Assistente de Negociação",
+    negotiationSubtitle: "Análise detalhada para sua negociação atual",
+    currentOffer: "Oferta Atual",
+    yourMinimumProfit: "Seu Lucro Mínimo",
+    minimumTarget: "Meta Definida",
+    minimumViableOffer: "Oferta Mínima Viável",
+    lowestAcceptable: "Menor Valor Aceitável",
+    maxPossibleReduction: "Redução Máxima",
+    discount: "desconto",
+    negotiationScenarios: "Cenários de Negociação",
+    reduction: "Redução",
+    newTotalValue: "Novo Valor Total",
+    newMonthlyRent: "Novo Aluguel Mensal",
+    taxes: "Impostos",
+    decision: "Decisão",
+    excellent: "Excelente",
+    acceptable: "Aceitável",
+    reject: "Rejeitar",
+    negotiationTips: "💡 Dicas de Negociação",
+    strongPosition: "Posição Forte",
+    strongPositionDesc: "Você tem margem para negociar. Use isso como vantagem para flexibilizar outros termos.",
+    counterOffer: "Contra-oferta",
+    counterOfferDesc: "Se pedirem desconto, contra-oferte com contrato mais longo ou outras vantagens.",
+    sweetSpot: "Ponto Ideal",
+    sweetSpotDesc: "Procure um valor que deixe ambas as partes satisfeitas e ainda atinja seu lucro mínimo.",
+    walkAway: "Limite Inferior",
+    walkAwayDesc: "Não aceite ofertas abaixo de {amount}. Abaixo disso, não vale a pena o investimento.",
+
+    // Viability Analysis
+    viabilityAnalysisTitle: "Análise de Viabilidade",
+    viabilitySubtitle: "Avalie a viabilidade do seu cenário de aluguel",
+    maxReduction: "Redução Máxima",
+    maxReductionDesc: "Maior desconto possível mantendo lucro positivo",
+    minViableRent: "Aluguel Mínimo Viável",
+    minViableRentDesc: "Menor valor de aluguel que ainda gera lucro",
+    maxDiscountAmount: "Valor Máximo de Desconto (R$)",
+    maxDiscountAmountDesc: "Máximo que pode ser descontado",
+    detailedViabilityAnalysis: "Análise Detalhada de Viabilidade",
+    newRent: "Novo Aluguel",
+    grossRevenue: "Receita Bruta",
+    viable: "Viável",
+    yes: "Sim",
+    no: "Não",
+    strategicInsights: "💡 Insights Estratégicos",
+    pricingFlexibility: "Flexibilidade de Preços",
+    lowMargin: "Margem Baixa",
+    lowMarginDesc: "Sua operação tem margem apertada. Considere revisar custos ou aumentar o aluguel.",
+    optimalStrategy: "Estratégia Ótima",
+    marketingTip: "Dica de Marketing",
+    marketingTipDesc: "Com boa margem, você pode oferecer descontos para atrair inquilinos rapidamente ou negociar contratos mais longos.",
+
     // Footer
-    footerDisclaimer: "Simulação baseada na legislação de 2024. Para decisões importantes, consulte sempre um contador qualificado.",
+    footerDisclaimer: "Simulação baseada nas tabelas tributárias de 2025 (IRPF vigente desde maio/2025). Para decisões importantes, consulte sempre um contador qualificado.",
     
     // Language
     language: "Idioma",
@@ -89,6 +145,8 @@ export const translations = {
     // Navigation
     inputData: "📝 Input Data",
     comparison: "📊 Individual vs Corporate",
+    viabilityAnalysis: "💰 Viability Analysis",
+    negotiationHelper: "🤝 Negotiation Helper",
     
     // Input Form
     simulationData: "Simulation Data",
@@ -106,6 +164,8 @@ export const translations = {
     individualOnly: "Individual Tax Only",
     monthlyDeductions: "📋 Monthly Deductions ($)",
     deductionsHelper: "Deductible expenses: property tax, HOA, repairs, depreciation, etc.",
+    minimumDesiredProfit: "💰 Minimum Desired Profit ($) *",
+    minimumDesiredProfitHelper: "Lowest profit you want to have at the end of the period",
     
     // Quick Summary
     quickSummary: "📋 Quick Summary:",
@@ -127,8 +187,8 @@ export const translations = {
     taxCalculation: "📊 Tax Calculation",
     taxBase: "Tax base:",
     monthlyTax: "Monthly tax:",
-    progressiveTable: "Method: Progressive Tax Table",
-    corporateRate: "Rate: 6% (Simplified Tax) + Pro-labore",
+    progressiveTable: "Method: Progressive Tax Table (2025)",
+    corporateRate: "Rate: 6% (Simplified Tax) + Pro-labore (2025 Social Security/Income Tax)",
     corporateRegime: "Method: Simplified Corporate Tax + Pro-labore Taxes",
     
     totalTax: "💸 Total Tax",
@@ -150,8 +210,60 @@ export const translations = {
     corporateReminder: "📋 Remember: For corporate, also consider opening costs, accounting (~$200-500/month), tax obligations, and that 28% of revenue will be pro-labore (subject to Social Security and Income Tax).",
     consultAccountant: "⚖️ Consult an accountant: This simulation is only for guidance. Each situation is unique and requires professional analysis.",
     
+    // Negotiation Helper
+    negotiationHelperTitle: "Negotiation Assistant",
+    negotiationSubtitle: "Detailed analysis for your current negotiation",
+    currentOffer: "Current Offer",
+    yourMinimumProfit: "Your Minimum Profit",
+    minimumTarget: "Defined Target",
+    minimumViableOffer: "Minimum Viable Offer",
+    lowestAcceptable: "Lowest Acceptable Value",
+    maxPossibleReduction: "Maximum Reduction",
+    discount: "discount",
+    negotiationScenarios: "Negotiation Scenarios",
+    reduction: "Reduction",
+    newTotalValue: "New Total Value",
+    newMonthlyRent: "New Monthly Rent",
+    taxes: "Taxes",
+    decision: "Decision",
+    excellent: "Excellent",
+    acceptable: "Acceptable",
+    reject: "Reject",
+    negotiationTips: "💡 Negotiation Tips",
+    strongPosition: "Strong Position",
+    strongPositionDesc: "You have room to negotiate. Use this as an advantage to flexibilize other terms.",
+    counterOffer: "Counter-Offer",
+    counterOfferDesc: "If they ask for a discount, counter-offer with a longer contract or other advantages.",
+    sweetSpot: "Ideal Point",
+    sweetSpotDesc: "Look for a value that satisfies both parties and still meets your minimum profit.",
+    walkAway: "Lower Limit",
+    walkAwayDesc: "Do not accept offers below {amount}. Below this, it is not worth the investment.",
+
+    // Viability Analysis
+    viabilityAnalysisTitle: "Viability Analysis",
+    viabilitySubtitle: "Evaluate the viability of your rental scenario",
+    maxReduction: "Maximum Reduction",
+    maxReductionDesc: "Highest discount possible while maintaining positive profit",
+    minViableRent: "Minimum Viable Rent",
+    minViableRentDesc: "Lowest rent value that still generates profit",
+    maxDiscountAmount: "Maximum Discount ($)",
+    maxDiscountAmountDesc: "Maximum amount that can be discounted",
+    detailedViabilityAnalysis: "Detailed Viability Analysis",
+    newRent: "New Rent",
+    grossRevenue: "Gross Revenue",
+    viable: "Viable",
+    yes: "Yes",
+    no: "No",
+    strategicInsights: "💡 Strategic Insights",
+    pricingFlexibility: "Pricing Flexibility",
+    lowMargin: "Low Margin",
+    lowMarginDesc: "Your operation has tight margins. Consider reviewing costs or increasing rent.",
+    optimalStrategy: "Optimal Strategy",
+    marketingTip: "Marketing Tip",
+    marketingTipDesc: "With good margins, you can offer discounts to attract tenants quickly or negotiate longer contracts.",
+
     // Footer
-    footerDisclaimer: "Simulation based on 2024 legislation. For important decisions, always consult a qualified accountant.",
+    footerDisclaimer: "Simulation based on 2025 tax tables (IRPF effective May 2025). For important decisions, always consult a qualified accountant.",
     
     // Language
     language: "Language",

@@ -9,6 +9,7 @@ interface RentalData {
   monthlyCosts: number;
   monthlyDeductions: number; // Only for Individual Person (PF)
   numberOfInvoices: number; // Number of invoices to split the total revenue
+  minimumDesiredProfit: number; // Minimum profit the owner wants to achieve
 }
 
 interface InputValues {
@@ -18,6 +19,7 @@ interface InputValues {
   monthlyCosts: string;
   monthlyDeductions: string;
   numberOfInvoices: string;
+  minimumDesiredProfit: string;
 }
 
 interface TaxResults {
@@ -46,24 +48,31 @@ interface ComparisonResults {
   bestOption: 'pf' | 'pj';
 }
 
-// Brazilian Income Tax Table 2024 (Monthly Rental Income)
+// Brazilian Income Tax Table 2025 (Valid from May 2025 - Monthly Rental Income)
 const IR_TABLE = [
-  { min: 0, max: 2259.20, rate: 0, deduction: 0 },
-  { min: 2259.21, max: 2826.65, rate: 7.5, deduction: 169.44 },
-  { min: 2826.66, max: 3751.05, rate: 15, deduction: 381.44 },
-  { min: 3751.06, max: 4664.68, rate: 22.5, deduction: 662.77 },
-  { min: 4664.69, max: Infinity, rate: 27.5, deduction: 896.00 }
+  { min: 0, max: 2428.80, rate: 0, deduction: 0 },
+  { min: 2428.81, max: 2826.65, rate: 7.5, deduction: 182.16 },
+  { min: 2826.66, max: 3751.05, rate: 15, deduction: 394.16 },
+  { min: 3751.06, max: 4664.68, rate: 22.5, deduction: 675.49 },
+  { min: 4664.69, max: Infinity, rate: 27.5, deduction: 908.73 }
+];
+
+// INSS Table 2025 (Progressive Brackets)
+const INSS_TABLE = [
+  { min: 0, max: 1518.00, rate: 7.5, deduction: 0 },
+  { min: 1518.01, max: 2793.88, rate: 9, deduction: 22.77 },
+  { min: 2793.89, max: 4190.83, rate: 12, deduction: 106.59 },
+  { min: 4190.84, max: 8157.41, rate: 14, deduction: 190.40 }
 ];
 
 // Constants for Corporate (PJ) calculations
 const PROLABORE_PERCENTAGE = 0.28; // 28% of revenue
-const INSS_RATE = 0.11; // 11% on pro-labore
-const INSS_MAX_AMOUNT = 7507.49; // INSS ceiling 2024
+const INSS_MAX_AMOUNT = 8157.41; // INSS ceiling 2025
 const SIMPLES_NACIONAL_RATE = 0.06; // 6% Simplified National Tax
 
 const HouseRentalSimulator: React.FC = () => {
   const { t, language, changeLanguage } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'input' | 'comparison'>('input');
+  const [activeTab, setActiveTab] = useState<'input' | 'comparison' | 'viability' | 'negotiation'>('input');
   const [data, setData] = useState<RentalData>({
     monthlyRent: 3500,
     rentalPeriod: 12,
@@ -71,6 +80,7 @@ const HouseRentalSimulator: React.FC = () => {
     monthlyCosts: 300,
     monthlyDeductions: 500,
     numberOfInvoices: 1,
+    minimumDesiredProfit: 5000,
   });
 
   // Separate state to control input values while user types
@@ -81,6 +91,7 @@ const HouseRentalSimulator: React.FC = () => {
     monthlyCosts: '300',
     monthlyDeductions: '500',
     numberOfInvoices: '1',
+    minimumDesiredProfit: '5000',
   });
   
   const [results, setResults] = useState<ComparisonResults>({
@@ -118,6 +129,18 @@ const HouseRentalSimulator: React.FC = () => {
     return Math.max(0, (taxableIncome * bracket.rate / 100) - bracket.deduction);
   };
 
+  const calculateINSS = (prolabore: number) => {
+    if (prolabore <= 0) return 0;
+    
+    // INSS is limited to the maximum ceiling
+    const limitedProlabore = Math.min(prolabore, INSS_MAX_AMOUNT);
+    
+    const bracket = INSS_TABLE.find(b => limitedProlabore >= b.min && limitedProlabore <= b.max);
+    if (!bracket) return 0;
+    
+    return Math.max(0, (limitedProlabore * bracket.rate / 100) - bracket.deduction);
+  };
+
   const calculateProlaboreIRPF = (monthlyProlabore: number, monthlyINSS: number) => {
     const taxableIncome = monthlyProlabore - monthlyINSS;
     
@@ -130,19 +153,19 @@ const HouseRentalSimulator: React.FC = () => {
   };
 
   const calculateProlaboreTaxes = (totalRevenue: number, numberOfInvoices: number) => {
-    // Value per invoice (total revenue divided by number of invoices)
+    // Valor por nota (receita total dividida pelo número de notas)
     const revenuePerInvoice = totalRevenue / numberOfInvoices;
     
-    // Pro-labore per invoice (28% of invoice value)
+    // Pro-labore por nota (28% do valor da nota)
     const prolaborePerInvoice = revenuePerInvoice * PROLABORE_PERCENTAGE;
     
-    // Calculate INSS per invoice (limited to monthly ceiling)
-    const inssPerInvoice = Math.min(prolaborePerInvoice, INSS_MAX_AMOUNT) * INSS_RATE;
+    // Calcular INSS por nota usando faixas progressivas
+    const inssPerInvoice = calculateINSS(prolaborePerInvoice);
     
-    // Calculate IRPF per invoice (on net value)
+    // Calcular IRPF por nota (sobre o valor líquido)
     const irpfPerInvoice = calculateProlaboreIRPF(prolaborePerInvoice, inssPerInvoice);
     
-    // Period totals
+    // Totais do período
     const totalINSS = inssPerInvoice * numberOfInvoices;
     const totalIRPF = irpfPerInvoice * numberOfInvoices;
     const totalProlabore = prolaborePerInvoice * numberOfInvoices;
@@ -152,14 +175,14 @@ const HouseRentalSimulator: React.FC = () => {
       inss: totalINSS,
       irpf: totalIRPF,
       totalTax: totalINSS + totalIRPF,
-      // Additional data for display
+      // Dados adicionais para exibição
       breakdown: {
-        prolaborePerInvoice: prolaborePerInvoice, // Pro-labore value per invoice
-        monthlyProlaborePerInvoice: prolaborePerInvoice, // Same value (now per invoice, not per month)
-        inssPerInvoice: inssPerInvoice, // INSS per invoice
-        irpfPerInvoice: irpfPerInvoice, // IRPF per invoice
-        monthlyINSSPerInvoice: inssPerInvoice, // Same value (now per invoice, not per month)
-        monthlyIRPFPerInvoice: irpfPerInvoice, // Same value (now per invoice, not per month)
+        prolaborePerInvoice: prolaborePerInvoice, // Valor do pro-labore por nota
+        monthlyProlaborePerInvoice: prolaborePerInvoice, // Mesmo valor (agora por nota, não por mês)
+        inssPerInvoice: inssPerInvoice, // INSS por nota
+        irpfPerInvoice: irpfPerInvoice, // IRPF por nota
+        monthlyINSSPerInvoice: inssPerInvoice, // Mesmo valor (agora por nota, não por mês)
+        monthlyIRPFPerInvoice: irpfPerInvoice, // Mesmo valor (agora por nota, não por mês)
       }
     };
   };
@@ -168,13 +191,13 @@ const HouseRentalSimulator: React.FC = () => {
     const totalGrossIncome = data.monthlyRent * data.rentalPeriod;
     const totalCosts = data.alternativeHousingCost + (data.monthlyCosts * data.rentalPeriod);
 
-    // Individual Person (Progressive Tax)
+    // Pessoa Física (Imposto Progressivo)
     const monthlyPFTax = calculatePFTax(data.monthlyRent, data.monthlyDeductions);
     const totalPFTax = monthlyPFTax * data.rentalPeriod;
     const pfNetIncome = totalGrossIncome - totalPFTax;
     const pfFinalProfit = pfNetIncome - totalCosts;
 
-    // Corporate (Simplified National Tax 6% + Pro-labore)
+    // Pessoa Jurídica (Simples Nacional 6% + Pró-labore)
     const simplesNacionalTax = totalGrossIncome * SIMPLES_NACIONAL_RATE;
     const prolaboreTaxes = calculateProlaboreTaxes(totalGrossIncome, data.numberOfInvoices);
     const totalPJTax = simplesNacionalTax + prolaboreTaxes.totalTax;
@@ -231,6 +254,7 @@ const HouseRentalSimulator: React.FC = () => {
       monthlyCosts: 400,
       monthlyDeductions: 600,
       numberOfInvoices: 2,
+      minimumDesiredProfit: 8000,
     };
     
     setData(exampleData);
@@ -241,6 +265,7 @@ const HouseRentalSimulator: React.FC = () => {
       monthlyCosts: '400',
       monthlyDeductions: '600',
       numberOfInvoices: '2',
+      minimumDesiredProfit: '8000',
     });
   };
 
@@ -252,6 +277,7 @@ const HouseRentalSimulator: React.FC = () => {
       monthlyCosts: 0,
       monthlyDeductions: 0,
       numberOfInvoices: 1,
+      minimumDesiredProfit: 0,
     };
     
     setData(emptyData);
@@ -262,7 +288,162 @@ const HouseRentalSimulator: React.FC = () => {
       monthlyCosts: '',
       monthlyDeductions: '',
       numberOfInvoices: '1',
+      minimumDesiredProfit: '',
     });
+  };
+
+  // Calculate maximum rent reduction while maintaining profitability
+  const calculateRentReduction = () => {
+    const totalCosts = data.alternativeHousingCost + (data.monthlyCosts * data.rentalPeriod);
+    const bestTaxRegime = results.bestOption;
+    
+    // Calculate what monthly rent would result in zero profit
+    const breakEvenAnalysis = [];
+    
+    for (let reduction = 0; reduction <= 50; reduction += 5) {
+      const reducedRent = data.monthlyRent * (1 - reduction / 100);
+      const totalGrossIncome = reducedRent * data.rentalPeriod;
+      
+      let totalTax = 0;
+      let netIncome = 0;
+      let finalProfit = 0;
+      
+      if (bestTaxRegime === 'pf') {
+        const monthlyPFTax = calculatePFTax(reducedRent, data.monthlyDeductions);
+        totalTax = monthlyPFTax * data.rentalPeriod;
+        netIncome = totalGrossIncome - totalTax;
+        finalProfit = netIncome - totalCosts;
+      } else {
+        const simplesNacionalTax = totalGrossIncome * SIMPLES_NACIONAL_RATE;
+        const prolaboreTaxes = calculateProlaboreTaxes(totalGrossIncome, data.numberOfInvoices);
+        totalTax = simplesNacionalTax + prolaboreTaxes.totalTax;
+        netIncome = totalGrossIncome - totalTax;
+        finalProfit = netIncome - totalCosts;
+      }
+      
+      breakEvenAnalysis.push({
+        reduction,
+        reducedRent,
+        totalGrossIncome,
+        totalTax,
+        netIncome,
+        finalProfit,
+        isViable: finalProfit >= 0
+      });
+    }
+    
+    return breakEvenAnalysis;
+  };
+
+  const getViabilityMetrics = () => {
+    const analysis = calculateRentReduction();
+    const lastViable = analysis.filter(item => item.isViable).pop();
+    const firstNonViable = analysis.find(item => !item.isViable);
+    
+    return {
+      analysis,
+      maxReduction: lastViable?.reduction || 0,
+      minViableRent: lastViable?.reducedRent || data.monthlyRent,
+      maxReductionAmount: data.monthlyRent - (lastViable?.reducedRent || data.monthlyRent),
+      breakEvenPoint: firstNonViable?.reduction || 50
+    };
+  };
+
+  // Calculate negotiation scenarios based on minimum desired profit
+  const calculateNegotiationScenarios = () => {
+    const totalCosts = data.alternativeHousingCost + (data.monthlyCosts * data.rentalPeriod);
+    const bestTaxRegime = results.bestOption;
+    
+    // Calculate minimum total rent needed to achieve desired profit
+    const targetNetIncome = data.minimumDesiredProfit + totalCosts;
+    
+    // Binary search to find minimum rent that achieves target profit
+    let minRent = 0;
+    let maxRent = data.monthlyRent * 2;
+    let optimalRent = data.monthlyRent;
+    
+    for (let i = 0; i < 50; i++) { // 50 iterations should be enough for precision
+      const testRent = (minRent + maxRent) / 2;
+      const totalGrossIncome = testRent * data.rentalPeriod;
+      
+      let totalTax = 0;
+      if (bestTaxRegime === 'pf') {
+        const monthlyPFTax = calculatePFTax(testRent, data.monthlyDeductions);
+        totalTax = monthlyPFTax * data.rentalPeriod;
+      } else {
+        const simplesNacionalTax = totalGrossIncome * SIMPLES_NACIONAL_RATE;
+        const prolaboreTaxes = calculateProlaboreTaxes(totalGrossIncome, data.numberOfInvoices);
+        totalTax = simplesNacionalTax + prolaboreTaxes.totalTax;
+      }
+      
+      const netIncome = totalGrossIncome - totalTax;
+      const finalProfit = netIncome - totalCosts;
+      
+      if (Math.abs(finalProfit - data.minimumDesiredProfit) < 10) {
+        optimalRent = testRent;
+        break;
+      }
+      
+      if (finalProfit < data.minimumDesiredProfit) {
+        minRent = testRent;
+      } else {
+        maxRent = testRent;
+        optimalRent = testRent;
+      }
+    }
+    
+    // Generate scenarios
+    const scenarios = [];
+    const originalTotal = data.monthlyRent * data.rentalPeriod;
+    
+    // Add some negotiation scenarios
+    const reductionAmounts = [0, 2000, 5000, 8000, 10000, 15000, 20000];
+    
+    for (const reduction of reductionAmounts) {
+      const newTotal = originalTotal - reduction;
+      const newMonthlyRent = newTotal / data.rentalPeriod;
+      
+      if (newMonthlyRent <= 0) continue;
+      
+      const totalGrossIncome = newTotal;
+      let totalTax = 0;
+      let netIncome = 0;
+      let finalProfit = 0;
+      
+      if (bestTaxRegime === 'pf') {
+        const monthlyPFTax = calculatePFTax(newMonthlyRent, data.monthlyDeductions);
+        totalTax = monthlyPFTax * data.rentalPeriod;
+        netIncome = totalGrossIncome - totalTax;
+        finalProfit = netIncome - totalCosts;
+      } else {
+        const simplesNacionalTax = totalGrossIncome * SIMPLES_NACIONAL_RATE;
+        const prolaboreTaxes = calculateProlaboreTaxes(totalGrossIncome, data.numberOfInvoices);
+        totalTax = simplesNacionalTax + prolaboreTaxes.totalTax;
+        netIncome = totalGrossIncome - totalTax;
+        finalProfit = netIncome - totalCosts;
+      }
+      
+      const meetsMinimum = finalProfit >= data.minimumDesiredProfit;
+      
+      scenarios.push({
+        reduction,
+        newTotal,
+        newMonthlyRent,
+        totalGrossIncome,
+        totalTax,
+        netIncome,
+        finalProfit,
+        meetsMinimum,
+        reductionPercentage: (reduction / originalTotal) * 100
+      });
+    }
+    
+    return {
+      scenarios,
+      optimalRent,
+      minViableTotal: optimalRent * data.rentalPeriod,
+      maxReduction: originalTotal - (optimalRent * data.rentalPeriod)
+    };
   };
 
   return (
@@ -279,6 +460,13 @@ const HouseRentalSimulator: React.FC = () => {
           <p className="text-gray-600 max-w-3xl mx-auto text-lg">
             {t('subtitle')}
           </p>
+          
+          {/* 2025 Tax Updates Badge */}
+          <div className="mt-4 inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-100 to-emerald-100 border border-green-300 rounded-full">
+            <span className="text-sm font-medium text-green-800">
+              🆕 {language === 'pt' ? 'Tabelas Tributárias 2025 (IRPF/INSS Atualizadas)' : 'Updated 2025 Tax Tables (IRPF/INSS)'}
+            </span>
+          </div>
           
           <div className="flex justify-center gap-4 mt-6">
             <button
@@ -332,6 +520,26 @@ const HouseRentalSimulator: React.FC = () => {
                 }`}
               >
                 {t('comparison')}
+              </button>
+              <button
+                onClick={() => setActiveTab('viability')}
+                className={`px-6 py-3 rounded-md font-medium transition-colors ${
+                  activeTab === 'viability'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                {t('viabilityAnalysis')}
+              </button>
+              <button
+                onClick={() => setActiveTab('negotiation')}
+                className={`px-6 py-3 rounded-md font-medium transition-colors ${
+                  activeTab === 'negotiation'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                {t('negotiationHelper')}
               </button>
             </div>
           </div>
@@ -408,6 +616,22 @@ const HouseRentalSimulator: React.FC = () => {
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       {t('alternativeHousingHelper')}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t('minimumDesiredProfit')}
+                    </label>
+                    <input
+                      type="text"
+                      value={inputValues.minimumDesiredProfit}
+                      onChange={(e) => handleInputChange('minimumDesiredProfit', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                      placeholder={language === 'pt' ? "5000" : "5000"}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {t('minimumDesiredProfitHelper')}
                     </p>
                   </div>
                 </div>
@@ -648,7 +872,7 @@ const HouseRentalSimulator: React.FC = () => {
                           <div className="font-medium mb-1">Valores por nota fiscal:</div>
                           <div>• Valor por nota: {formatCurrency((data.monthlyRent * data.rentalPeriod) / data.numberOfInvoices)}</div>
                           <div>• Pró-labore por nota: {formatCurrency(results.pj.prolabore?.breakdown?.prolaborePerInvoice || 0)}</div>
-                          <div>• INSS por nota: {formatCurrency(results.pj.prolabore?.breakdown?.inssPerInvoice || 0)}</div>
+                          <div>• INSS por nota (progressivo): {formatCurrency(results.pj.prolabore?.breakdown?.inssPerInvoice || 0)}</div>
                           <div>• IRPF por nota: {formatCurrency(results.pj.prolabore?.breakdown?.irpfPerInvoice || 0)}</div>
                           {data.numberOfInvoices > 1 && (
                             <div className="text-green-600 font-medium mt-1">
@@ -863,10 +1087,401 @@ const HouseRentalSimulator: React.FC = () => {
           </div>
         )}
 
+        {/* Viability Analysis Tab */}
+        {activeTab === 'viability' && (
+          <div className="space-y-8">
+            {/* Header */}
+            <div className="text-center py-6 px-8 rounded-xl shadow-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+              <div className="flex items-center justify-center mb-2">
+                <Calculator className="w-8 h-8 mr-3" />
+                <h2 className="text-3xl font-bold">
+                  {t('viabilityAnalysisTitle')}
+                </h2>
+              </div>
+              <p className="text-xl opacity-90">
+                {t('viabilitySubtitle')}
+              </p>
+            </div>
+
+            {(() => {
+              const viabilityData = getViabilityMetrics();
+              return (
+                <>
+                  {/* Key Metrics */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Maximum Reduction */}
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200 shadow-lg">
+                      <div className="flex items-center mb-3">
+                        <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-white font-bold text-lg">%</span>
+                        </div>
+                        <h3 className="font-semibold text-green-800">{t('maxReduction')}</h3>
+                      </div>
+                      <div className="text-3xl font-bold text-green-600 mb-2">
+                        {viabilityData.maxReduction}%
+                      </div>
+                      <p className="text-sm text-green-700">
+                        {t('maxReductionDesc')}
+                      </p>
+                    </div>
+
+                    {/* Minimum Viable Rent */}
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200 shadow-lg">
+                      <div className="flex items-center mb-3">
+                        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-white font-bold text-lg">R$</span>
+                        </div>
+                        <h3 className="font-semibold text-blue-800">{t('minViableRent')}</h3>
+                      </div>
+                      <div className="text-3xl font-bold text-blue-600 mb-2">
+                        {formatCurrency(viabilityData.minViableRent)}
+                      </div>
+                      <p className="text-sm text-blue-700">
+                        {t('minViableRentDesc')}
+                      </p>
+                    </div>
+
+                    {/* Maximum Discount Amount */}
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200 shadow-lg">
+                      <div className="flex items-center mb-3">
+                        <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-white font-bold text-lg">-</span>
+                        </div>
+                        <h3 className="font-semibold text-purple-800">{t('maxDiscountAmount')}</h3>
+                      </div>
+                      <div className="text-3xl font-bold text-purple-600 mb-2">
+                        {formatCurrency(viabilityData.maxReductionAmount)}
+                      </div>
+                      <p className="text-sm text-purple-700">
+                        {t('maxDiscountAmountDesc')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Detailed Analysis Table */}
+                  <div className="bg-white rounded-xl shadow-xl p-8">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                      <AlertCircle className="w-6 h-6 mr-3" />
+                      {t('detailedViabilityAnalysis')}
+                    </h3>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b-2 border-gray-200">
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700">{t('reduction')}</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700">{t('newRent')}</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700">{t('grossRevenue')}</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700">{t('taxes')}</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700">{t('netRevenue')}</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700">{t('finalProfit')}</th>
+                            <th className="text-center py-3 px-4 font-semibold text-gray-700">{t('viable')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {viabilityData.analysis.map((item, index) => (
+                            <tr 
+                              key={index} 
+                              className={`border-b border-gray-100 ${
+                                !item.isViable ? 'bg-red-50' : 
+                                item.reduction === 0 ? 'bg-blue-50' : 'hover:bg-gray-50'
+                              }`}
+                            >
+                              <td className="py-3 px-4 font-medium">
+                                {item.reduction === 0 ? (
+                                  <span className="text-blue-600 font-bold">{item.reduction}% (Atual)</span>
+                                ) : (
+                                  <span className={item.isViable ? 'text-green-600' : 'text-red-600'}>
+                                    -{item.reduction}%
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-3 px-4">{formatCurrency(item.reducedRent)}</td>
+                              <td className="py-3 px-4">{formatCurrency(item.totalGrossIncome)}</td>
+                              <td className="py-3 px-4 text-red-600">{formatCurrency(item.totalTax)}</td>
+                              <td className="py-3 px-4 text-green-600">{formatCurrency(item.netIncome)}</td>
+                              <td className={`py-3 px-4 font-semibold ${
+                                item.finalProfit >= 0 ? 'text-blue-600' : 'text-red-600'
+                              }`}>
+                                {formatCurrency(item.finalProfit)}
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                {item.isViable ? (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    ✅ {t('yes')}
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    ❌ {t('no')}
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Strategic Insights */}
+                    <div className="mt-8 space-y-4">
+                      <h4 className="text-lg font-semibold text-gray-800">{t('strategicInsights')}</h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {viabilityData.maxReduction > 0 ? (
+                          <div className="p-4 bg-green-50 border-l-4 border-green-400 rounded">
+                            <h5 className="font-medium text-green-800 mb-2">💰 {t('pricingFlexibility')}</h5>
+                            <p className="text-green-700 text-sm">
+                              {language === 'pt' 
+                                ? `Você pode reduzir até ${viabilityData.maxReduction}% do aluguel (${formatCurrency(viabilityData.maxReductionAmount)}) e ainda ter lucro.`
+                                : `You can reduce up to ${viabilityData.maxReduction}% of rent (${formatCurrency(viabilityData.maxReductionAmount)}) and still profit.`
+                              }
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="p-4 bg-red-50 border-l-4 border-red-400 rounded">
+                            <h5 className="font-medium text-red-800 mb-2">⚠️ {t('lowMargin')}</h5>
+                            <p className="text-red-700 text-sm">
+                              {t('lowMarginDesc')}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded">
+                          <h5 className="font-medium text-blue-800 mb-2">📊 {t('optimalStrategy')}</h5>
+                          <p className="text-blue-700 text-sm">
+                            {language === 'pt'
+                              ? `Use ${results.bestOption === 'pf' ? 'Pessoa Física' : 'Pessoa Jurídica'} para maximizar lucros neste cenário.`
+                              : `Use ${results.bestOption === 'pf' ? 'Individual' : 'Corporate'} to maximize profits in this scenario.`
+                            }
+                          </p>
+                        </div>
+                      </div>
+
+                      {viabilityData.maxReduction >= 15 && (
+                        <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                          <h5 className="font-medium text-yellow-800 mb-2">🎯 {t('marketingTip')}</h5>
+                          <p className="text-yellow-700 text-sm">
+                            {t('marketingTipDesc')}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* Negotiation Helper Tab */}
+        {activeTab === 'negotiation' && (
+          <div className="space-y-8">
+            {/* Header */}
+            <div className="text-center py-6 px-8 rounded-xl shadow-lg bg-gradient-to-r from-orange-500 to-red-600 text-white">
+              <div className="flex items-center justify-center mb-2">
+                <Users className="w-8 h-8 mr-3" />
+                <h2 className="text-3xl font-bold">
+                  {t('negotiationHelperTitle')}
+                </h2>
+              </div>
+              <p className="text-xl opacity-90">
+                {t('negotiationSubtitle')}
+              </p>
+            </div>
+
+            {(() => {
+              const negotiationData = calculateNegotiationScenarios();
+              const originalTotal = data.monthlyRent * data.rentalPeriod;
+              
+              return (
+                <>
+                  {/* Key Insights */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    {/* Current Offer */}
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200 shadow-lg">
+                      <div className="flex items-center mb-3">
+                        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-white font-bold text-lg">💰</span>
+                        </div>
+                        <h3 className="font-semibold text-blue-800">{t('currentOffer')}</h3>
+                      </div>
+                      <div className="text-2xl font-bold text-blue-600 mb-1">
+                        {formatCurrency(originalTotal)}
+                      </div>
+                      <div className="text-sm text-blue-700">
+                        {formatCurrency(data.monthlyRent)}/mês × {data.rentalPeriod} meses
+                      </div>
+                    </div>
+
+                    {/* Minimum Desired Profit */}
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200 shadow-lg">
+                      <div className="flex items-center mb-3">
+                        <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-white font-bold text-lg">🎯</span>
+                        </div>
+                        <h3 className="font-semibold text-green-800">{t('yourMinimumProfit')}</h3>
+                      </div>
+                      <div className="text-2xl font-bold text-green-600 mb-1">
+                        {formatCurrency(data.minimumDesiredProfit)}
+                      </div>
+                      <div className="text-sm text-green-700">
+                        {t('minimumTarget')}
+                      </div>
+                    </div>
+
+                    {/* Minimum Viable Offer */}
+                    <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-xl p-6 border border-yellow-200 shadow-lg">
+                      <div className="flex items-center mb-3">
+                        <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-white font-bold text-lg">⚠️</span>
+                        </div>
+                        <h3 className="font-semibold text-yellow-800">{t('minimumViableOffer')}</h3>
+                      </div>
+                      <div className="text-2xl font-bold text-yellow-600 mb-1">
+                        {formatCurrency(negotiationData.minViableTotal)}
+                      </div>
+                      <div className="text-sm text-yellow-700">
+                        {t('lowestAcceptable')}
+                      </div>
+                    </div>
+
+                    {/* Maximum Reduction */}
+                    <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-xl p-6 border border-red-200 shadow-lg">
+                      <div className="flex items-center mb-3">
+                        <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-white font-bold text-lg">📉</span>
+                        </div>
+                        <h3 className="font-semibold text-red-800">{t('maxPossibleReduction')}</h3>
+                      </div>
+                      <div className="text-2xl font-bold text-red-600 mb-1">
+                        {formatCurrency(negotiationData.maxReduction)}
+                      </div>
+                      <div className="text-sm text-red-700">
+                        {((negotiationData.maxReduction / originalTotal) * 100).toFixed(1)}% {t('discount')}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Negotiation Scenarios Table */}
+                  <div className="bg-white rounded-xl shadow-xl p-8">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                      <AlertCircle className="w-6 h-6 mr-3" />
+                      {t('negotiationScenarios')}
+                    </h3>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b-2 border-gray-200">
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700">{t('reduction')}</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700">{t('newTotalValue')}</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700">{t('newMonthlyRent')}</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700">{t('taxes')}</th>
+                            <th className="text-left py-3 px-4 font-semibold text-gray-700">{t('finalProfit')}</th>
+                            <th className="text-center py-3 px-4 font-semibold text-gray-700">{t('decision')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {negotiationData.scenarios.map((scenario, index) => (
+                            <tr 
+                              key={index} 
+                              className={`border-b border-gray-100 ${
+                                !scenario.meetsMinimum ? 'bg-red-50' : 
+                                scenario.reduction === 0 ? 'bg-blue-50' : 
+                                scenario.finalProfit >= data.minimumDesiredProfit * 1.5 ? 'bg-green-50' : 'hover:bg-gray-50'
+                              }`}
+                            >
+                              <td className="py-3 px-4 font-medium">
+                                {scenario.reduction === 0 ? (
+                                  <span className="text-blue-600 font-bold">Original</span>
+                                ) : (
+                                  <span className={scenario.meetsMinimum ? 'text-orange-600' : 'text-red-600'}>
+                                    -{formatCurrency(scenario.reduction)} ({scenario.reductionPercentage.toFixed(1)}%)
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-3 px-4 font-semibold">{formatCurrency(scenario.newTotal)}</td>
+                              <td className="py-3 px-4">{formatCurrency(scenario.newMonthlyRent)}</td>
+                              <td className="py-3 px-4 text-red-600">{formatCurrency(scenario.totalTax)}</td>
+                              <td className={`py-3 px-4 font-semibold ${
+                                scenario.finalProfit >= data.minimumDesiredProfit ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {formatCurrency(scenario.finalProfit)}
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                {scenario.meetsMinimum ? (
+                                  scenario.finalProfit >= data.minimumDesiredProfit * 1.5 ? (
+                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                      ✅ {t('excellent')}
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                      ⚠️ {t('acceptable')}
+                                    </span>
+                                  )
+                                ) : (
+                                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    ❌ {t('reject')}
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Negotiation Tips */}
+                    <div className="mt-8 space-y-4">
+                      <h4 className="text-lg font-semibold text-gray-800">{t('negotiationTips')}</h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded">
+                          <h5 className="font-medium text-blue-800 mb-2">💡 {t('strongPosition')}</h5>
+                          <p className="text-blue-700 text-sm">
+                            {t('strongPositionDesc')}
+                          </p>
+                        </div>
+
+                        <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                          <h5 className="font-medium text-yellow-800 mb-2">⚖️ {t('counterOffer')}</h5>
+                          <p className="text-yellow-700 text-sm">
+                            {t('counterOfferDesc')}
+                          </p>
+                        </div>
+
+                        <div className="p-4 bg-green-50 border-l-4 border-green-400 rounded">
+                          <h5 className="font-medium text-green-800 mb-2">🎯 {t('sweetSpot')}</h5>
+                          <p className="text-green-700 text-sm">
+                            {t('sweetSpotDesc')}
+                          </p>
+                        </div>
+
+                        <div className="p-4 bg-red-50 border-l-4 border-red-400 rounded">
+                          <h5 className="font-medium text-red-800 mb-2">🚫 {t('walkAway')}</h5>
+                          <p className="text-red-700 text-sm">
+                            {t('walkAwayDesc', { amount: formatCurrency(negotiationData.minViableTotal) })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        )}
+
         {/* Footer */}
-        <div className="mt-12 text-center text-gray-500 text-sm">
+        <div className="mt-12 text-center text-gray-500 text-sm space-y-2">
           <p className="flex items-center justify-center gap-2">
             💡 <strong>{t('footerDisclaimer')}</strong>
+          </p>
+          <p className="text-xs">
+            {language === 'pt' 
+              ? 'Baseado nas tabelas tributárias brasileiras de 2025 (IRPF vigente desde maio/2025 e INSS progressivo)'
+              : 'Based on 2025 Brazilian tax tables (IRPF effective May 2025 and progressive INSS)'
+            }
           </p>
         </div>
       </div>

@@ -22,9 +22,9 @@ This advanced tax simulator helps homeowners decide the most profitable way to r
 #### 💰 **Advanced Tax Calculations**
 - **Pro-labore Strategy**: 28% of revenue with optimized invoice splitting
 - **Multiple Invoices**: Split revenue across multiple invoices to reduce pro-labore taxes
-- **Progressive Tax Tables**: Brazilian 2024 income tax brackets
-- **Social Security (INSS)**: 11% with monthly ceiling limits
-- **Income Tax (IRPF)**: Progressive calculation on net pro-labore
+- **Progressive Tax Tables**: **Updated 2025 Brazilian tax brackets (IRPF effective May 2025)**
+- **Social Security (INSS)**: **Progressive 2025 brackets (7.5% to 14%) with R$ 8,157.41 ceiling**
+- **Income Tax (IRPF)**: Progressive calculation on net pro-labore using 2025 tables
 
 #### 📈 **Comprehensive Cost Analysis**
 - **Detailed Cost Breakdown**: Visual breakdown of all costs
@@ -82,6 +82,22 @@ npm run dev
 
 ### 📊 Understanding Results
 
+#### **🆕 2025 Tax Updates**
+This simulator uses the **latest 2025 Brazilian tax tables**:
+
+**IRPF (Income Tax) - Effective May 2025:**
+- Tax-free: Up to R$ 2,428.80
+- 7.5%: R$ 2,428.81 to R$ 2,826.65
+- 15%: R$ 2,826.66 to R$ 3,751.05  
+- 22.5%: R$ 3,751.06 to R$ 4,664.68
+- 27.5%: Above R$ 4,664.68
+
+**INSS (Social Security) - 2025 Progressive Brackets:**
+- 7.5%: Up to R$ 1,518.00
+- 9%: R$ 1,518.01 to R$ 2,793.88
+- 12%: R$ 2,793.89 to R$ 4,190.83
+- 14%: R$ 4,190.84 to R$ 8,157.41 (ceiling)
+
 #### **Individual Person (PF)**
 - **Tax Base**: Monthly rent minus deductions
 - **Tax Calculation**: Progressive table (Carnê-Leão)
@@ -122,7 +138,7 @@ Developed by Bernardo Werlang
 
 ---
 
-**⚠️ Important Disclaimer**: This application is a simulation tool based on 2024 Brazilian tax legislation. For important financial and tax decisions, always consult a qualified accountant or tax advisor.
+**⚠️ Important Disclaimer**: This application is a simulation tool based on **2025 Brazilian tax legislation** (IRPF and INSS progressive tables). For important financial and tax decisions, always consult a qualified accountant or tax advisor.
 
 ---
 
@@ -142,9 +158,9 @@ Este simulador tributário avançado ajuda proprietários a decidir a forma mais
 #### 💰 **Cálculos Tributários Avançados**
 - **Estratégia de Pró-labore**: 28% do faturamento com divisão otimizada de notas fiscais
 - **Múltiplas Notas Fiscais**: Divida a receita em várias notas para reduzir impostos do pró-labore
-- **Tabelas Progressivas**: Faixas de IR brasileiras de 2024
-- **INSS**: 11% com limites de teto mensal
-- **IRPF**: Cálculo progressivo sobre pró-labore líquido
+- **Tabelas Progressivas**: **Faixas de IR brasileiras atualizadas para 2025 (IRPF vigente desde maio/2025)**
+- **INSS**: **Faixas progressivas 2025 (7,5% a 14%) com teto de R$ 8.157,41**
+- **IRPF**: Cálculo progressivo sobre pró-labore líquido usando tabelas 2025
 
 #### 📈 **Análise Abrangente de Custos**
 - **Breakdown Detalhado**: Visualização detalhada de todos os custos
@@ -202,6 +218,22 @@ npm run dev
 
 ### 📊 Entendendo os Resultados
 
+#### **🆕 Atualizações Tributárias 2025**
+Este simulador utiliza as **mais recentes tabelas tributárias brasileiras de 2025**:
+
+**IRPF (Imposto de Renda) - Vigente desde maio/2025:**
+- Isento: Até R$ 2.428,80
+- 7,5%: R$ 2.428,81 a R$ 2.826,65
+- 15%: R$ 2.826,66 a R$ 3.751,05
+- 22,5%: R$ 3.751,06 a R$ 4.664,68
+- 27,5%: Acima de R$ 4.664,68
+
+**INSS (Previdência Social) - Faixas Progressivas 2025:**
+- 7,5%: Até R$ 1.518,00
+- 9%: R$ 1.518,01 a R$ 2.793,88
+- 12%: R$ 2.793,89 a R$ 4.190,83
+- 14%: R$ 4.190,84 a R$ 8.157,41 (teto)
+
 #### **Pessoa Física (PF)**
 - **Base de Cálculo**: Aluguel mensal menos deduções
 - **Cálculo do Imposto**: Tabela progressiva (Carnê-Leão)
@@ -242,4 +274,4 @@ Desenvolvido por Bernardo Werlang
 
 ---
 
-**⚠️ Aviso Importante**: Esta aplicação é uma ferramenta de simulação baseada na legislação tributária brasileira de 2024. Para decisões financeiras e tributárias importantes, consulte sempre um contador ou consultor tributário qualificado.
+**⚠️ Aviso Importante**: Esta aplicação é uma ferramenta de simulação baseada na **legislação tributária brasileira de 2025** (tabelas progressivas de IRPF e INSS). Para decisões financeiras e tributárias importantes, consulte sempre um contador ou consultor tributário qualificado.
