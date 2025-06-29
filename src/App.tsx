@@ -7,13 +7,37 @@ interface RentalData {
   rentalPeriod: number;
   alternativeHousingCost: number;
   monthlyCosts: number;
-  monthlyDeductions: number; // Apenas para PF
+  monthlyDeductions: number; // Only for Individual Person (PF)
+  numberOfInvoices: number; // Number of invoices to split the total revenue
+}
+
+interface InputValues {
+  monthlyRent: string;
+  rentalPeriod: string;
+  alternativeHousingCost: string;
+  monthlyCosts: string;
+  monthlyDeductions: string;
+  numberOfInvoices: string;
 }
 
 interface TaxResults {
   totalTax: number;
   netIncome: number;
   finalProfit: number;
+  prolabore?: {
+    amount: number;
+    inss: number;
+    irpf: number;
+    totalTax: number;
+    breakdown?: {
+      prolaborePerInvoice: number;
+      monthlyProlaborePerInvoice: number;
+      inssPerInvoice: number;
+      irpfPerInvoice: number;
+      monthlyINSSPerInvoice: number;
+      monthlyIRPFPerInvoice: number;
+    };
+  };
 }
 
 interface ComparisonResults {
@@ -22,7 +46,7 @@ interface ComparisonResults {
   bestOption: 'pf' | 'pj';
 }
 
-// Tabela do IR 2024 (Carnê-Leão)
+// Brazilian Income Tax Table 2024 (Monthly Rental Income)
 const IR_TABLE = [
   { min: 0, max: 2259.20, rate: 0, deduction: 0 },
   { min: 2259.21, max: 2826.65, rate: 7.5, deduction: 169.44 },
@@ -30,6 +54,12 @@ const IR_TABLE = [
   { min: 3751.06, max: 4664.68, rate: 22.5, deduction: 662.77 },
   { min: 4664.69, max: Infinity, rate: 27.5, deduction: 896.00 }
 ];
+
+// Constants for Corporate (PJ) calculations
+const PROLABORE_PERCENTAGE = 0.28; // 28% of revenue
+const INSS_RATE = 0.11; // 11% on pro-labore
+const INSS_MAX_AMOUNT = 7507.49; // INSS ceiling 2024
+const SIMPLES_NACIONAL_RATE = 0.06; // 6% Simplified National Tax
 
 const HouseRentalSimulator: React.FC = () => {
   const { t, language, changeLanguage } = useTranslation();
@@ -40,6 +70,17 @@ const HouseRentalSimulator: React.FC = () => {
     alternativeHousingCost: 18000,
     monthlyCosts: 300,
     monthlyDeductions: 500,
+    numberOfInvoices: 1,
+  });
+
+  // Separate state to control input values while user types
+  const [inputValues, setInputValues] = useState<InputValues>({
+    monthlyRent: '3500',
+    rentalPeriod: '12',
+    alternativeHousingCost: '18000',
+    monthlyCosts: '300',
+    monthlyDeductions: '500',
+    numberOfInvoices: '1',
   });
   
   const [results, setResults] = useState<ComparisonResults>({
@@ -77,18 +118,66 @@ const HouseRentalSimulator: React.FC = () => {
     return Math.max(0, (taxableIncome * bracket.rate / 100) - bracket.deduction);
   };
 
+  const calculateProlaboreIRPF = (monthlyProlabore: number, monthlyINSS: number) => {
+    const taxableIncome = monthlyProlabore - monthlyINSS;
+    
+    if (taxableIncome <= 0) return 0;
+    
+    const bracket = IR_TABLE.find(b => taxableIncome >= b.min && taxableIncome <= b.max);
+    if (!bracket) return 0;
+    
+    return Math.max(0, (taxableIncome * bracket.rate / 100) - bracket.deduction);
+  };
+
+  const calculateProlaboreTaxes = (totalRevenue: number, numberOfInvoices: number) => {
+    // Value per invoice (total revenue divided by number of invoices)
+    const revenuePerInvoice = totalRevenue / numberOfInvoices;
+    
+    // Pro-labore per invoice (28% of invoice value)
+    const prolaborePerInvoice = revenuePerInvoice * PROLABORE_PERCENTAGE;
+    
+    // Calculate INSS per invoice (limited to monthly ceiling)
+    const inssPerInvoice = Math.min(prolaborePerInvoice, INSS_MAX_AMOUNT) * INSS_RATE;
+    
+    // Calculate IRPF per invoice (on net value)
+    const irpfPerInvoice = calculateProlaboreIRPF(prolaborePerInvoice, inssPerInvoice);
+    
+    // Period totals
+    const totalINSS = inssPerInvoice * numberOfInvoices;
+    const totalIRPF = irpfPerInvoice * numberOfInvoices;
+    const totalProlabore = prolaborePerInvoice * numberOfInvoices;
+    
+    return {
+      amount: totalProlabore,
+      inss: totalINSS,
+      irpf: totalIRPF,
+      totalTax: totalINSS + totalIRPF,
+      // Additional data for display
+      breakdown: {
+        prolaborePerInvoice: prolaborePerInvoice, // Pro-labore value per invoice
+        monthlyProlaborePerInvoice: prolaborePerInvoice, // Same value (now per invoice, not per month)
+        inssPerInvoice: inssPerInvoice, // INSS per invoice
+        irpfPerInvoice: irpfPerInvoice, // IRPF per invoice
+        monthlyINSSPerInvoice: inssPerInvoice, // Same value (now per invoice, not per month)
+        monthlyIRPFPerInvoice: irpfPerInvoice, // Same value (now per invoice, not per month)
+      }
+    };
+  };
+
   const calculateResults = () => {
     const totalGrossIncome = data.monthlyRent * data.rentalPeriod;
     const totalCosts = data.alternativeHousingCost + (data.monthlyCosts * data.rentalPeriod);
 
-    // Pessoa Física (Carnê-Leão)
+    // Individual Person (Progressive Tax)
     const monthlyPFTax = calculatePFTax(data.monthlyRent, data.monthlyDeductions);
     const totalPFTax = monthlyPFTax * data.rentalPeriod;
     const pfNetIncome = totalGrossIncome - totalPFTax;
     const pfFinalProfit = pfNetIncome - totalCosts;
 
-    // Pessoa Jurídica (Simples Nacional 6%)
-    const totalPJTax = totalGrossIncome * 0.06;
+    // Corporate (Simplified National Tax 6% + Pro-labore)
+    const simplesNacionalTax = totalGrossIncome * SIMPLES_NACIONAL_RATE;
+    const prolaboreTaxes = calculateProlaboreTaxes(totalGrossIncome, data.numberOfInvoices);
+    const totalPJTax = simplesNacionalTax + prolaboreTaxes.totalTax;
     const pjNetIncome = totalGrossIncome - totalPJTax;
     const pjFinalProfit = pjNetIncome - totalCosts;
 
@@ -103,7 +192,8 @@ const HouseRentalSimulator: React.FC = () => {
       pj: {
         totalTax: totalPJTax,
         netIncome: pjNetIncome,
-        finalProfit: pjFinalProfit
+        finalProfit: pjFinalProfit,
+        prolabore: prolaboreTaxes
       },
       bestOption
     });
@@ -113,32 +203,65 @@ const HouseRentalSimulator: React.FC = () => {
     calculateResults();
   }, [data]);
 
-  const handleInputChange = (field: keyof RentalData, value: number) => {
-    setData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: keyof RentalData, value: string) => {
+    // Update input value immediately to keep typing smooth
+    setInputValues(prev => ({ ...prev, [field]: value }));
+    
+    // Parse value and update numeric data
+    let numericValue: number;
+    if (field === 'rentalPeriod' || field === 'numberOfInvoices') {
+      numericValue = parseNumberInput(value);
+    } else {
+      numericValue = parseCurrencyInput(value);
+    }
+    
+    setData(prev => ({ ...prev, [field]: numericValue }));
   };
 
-  const handleCurrencyInputChange = (field: keyof RentalData, value: string) => {
-    const numericValue = parseCurrencyInput(value);
-    handleInputChange(field, numericValue);
+  const parseNumberInput = (value: string) => {
+    const parsed = parseFloat(value);
+    return isNaN(parsed) ? 0 : parsed;
   };
 
   const loadExampleData = () => {
-    setData({
+    const exampleData = {
       monthlyRent: 4000,
       rentalPeriod: 12,
       alternativeHousingCost: 20000,
       monthlyCosts: 400,
       monthlyDeductions: 600,
+      numberOfInvoices: 2,
+    };
+    
+    setData(exampleData);
+    setInputValues({
+      monthlyRent: '4000',
+      rentalPeriod: '12',
+      alternativeHousingCost: '20000',
+      monthlyCosts: '400',
+      monthlyDeductions: '600',
+      numberOfInvoices: '2',
     });
   };
 
   const clearData = () => {
-    setData({
+    const emptyData = {
       monthlyRent: 0,
       rentalPeriod: 12,
       alternativeHousingCost: 0,
       monthlyCosts: 0,
       monthlyDeductions: 0,
+      numberOfInvoices: 1,
+    };
+    
+    setData(emptyData);
+    setInputValues({
+      monthlyRent: '',
+      rentalPeriod: '12',
+      alternativeHousingCost: '',
+      monthlyCosts: '',
+      monthlyDeductions: '',
+      numberOfInvoices: '1',
     });
   };
 
@@ -236,10 +359,10 @@ const HouseRentalSimulator: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      value={data.monthlyRent ? formatCurrency(data.monthlyRent) : ''}
-                      onChange={(e) => handleCurrencyInputChange('monthlyRent', e.target.value)}
+                      value={inputValues.monthlyRent}
+                      onChange={(e) => handleInputChange('monthlyRent', e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
-                      placeholder={language === 'pt' ? "R$ 3.500,00" : "$3,500.00"}
+                      placeholder={language === 'pt' ? "3500" : "3500"}
                     />
                   </div>
 
@@ -248,13 +371,28 @@ const HouseRentalSimulator: React.FC = () => {
                       {t('rentalPeriod')}
                     </label>
                     <input
-                      type="number"
-                      value={data.rentalPeriod || ''}
-                      onChange={(e) => handleInputChange('rentalPeriod', Number(e.target.value))}
+                      type="text"
+                      value={inputValues.rentalPeriod}
+                      onChange={(e) => handleInputChange('rentalPeriod', e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
                       placeholder="12"
-                      min="1"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t('numberOfInvoices')}
+                    </label>
+                    <input
+                      type="text"
+                      value={inputValues.numberOfInvoices}
+                      onChange={(e) => handleInputChange('numberOfInvoices', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                      placeholder="1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {t('numberOfInvoicesHelper')}
+                    </p>
                   </div>
 
                   <div>
@@ -263,10 +401,10 @@ const HouseRentalSimulator: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      value={data.alternativeHousingCost ? formatCurrency(data.alternativeHousingCost) : ''}
-                      onChange={(e) => handleCurrencyInputChange('alternativeHousingCost', e.target.value)}
+                      value={inputValues.alternativeHousingCost}
+                      onChange={(e) => handleInputChange('alternativeHousingCost', e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
-                      placeholder={language === 'pt' ? "R$ 18.000,00" : "$18,000.00"}
+                      placeholder={language === 'pt' ? "18000" : "18000"}
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       {t('alternativeHousingHelper')}
@@ -283,14 +421,13 @@ const HouseRentalSimulator: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t('monthlyCosts')}
-                    </label>
-                    <input
-                      type="text"
-                      value={data.monthlyCosts ? formatCurrency(data.monthlyCosts) : ''}
-                      onChange={(e) => handleCurrencyInputChange('monthlyCosts', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
-                      placeholder={language === 'pt' ? "R$ 300,00" : "$300.00"}
-                    />
+                    </label>                      <input
+                        type="text"
+                        value={inputValues.monthlyCosts}
+                        onChange={(e) => handleInputChange('monthlyCosts', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                        placeholder={language === 'pt' ? "300" : "300"}
+                      />
                     <p className="text-xs text-gray-500 mt-1">
                       {t('monthlyCortsHelper')}
                     </p>
@@ -304,14 +441,13 @@ const HouseRentalSimulator: React.FC = () => {
                     <div>
                       <label className="block text-sm font-medium text-blue-700 mb-2">
                         {t('monthlyDeductions')}
-                      </label>
-                      <input
-                        type="text"
-                        value={data.monthlyDeductions ? formatCurrency(data.monthlyDeductions) : ''}
-                        onChange={(e) => handleCurrencyInputChange('monthlyDeductions', e.target.value)}
-                        className="w-full px-4 py-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg bg-white"
-                        placeholder={language === 'pt' ? "R$ 500,00" : "$500.00"}
-                      />
+                      </label>                        <input
+                          type="text"
+                          value={inputValues.monthlyDeductions}
+                          onChange={(e) => handleInputChange('monthlyDeductions', e.target.value)}
+                          className="w-full px-4 py-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg bg-white"
+                          placeholder={language === 'pt' ? "500" : "500"}
+                        />
                       <p className="text-xs text-blue-600 mt-1">
                         {t('deductionsHelper')}
                       </p>
@@ -343,6 +479,24 @@ const HouseRentalSimulator: React.FC = () => {
                     </div>
                   </div>
                 </div>
+                
+                {/* Informações adicionais sobre PJ */}
+                {data.numberOfInvoices > 1 && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">📄 Estratégia PJ:</span>
+                      <span className="font-medium text-purple-600">
+                        {data.numberOfInvoices} notas fiscais
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm mt-1">
+                      <span className="text-gray-600">Pró-labore por nota:</span>
+                      <span className="font-medium text-purple-600">
+                        {formatCurrency((data.monthlyRent * data.rentalPeriod * PROLABORE_PERCENTAGE) / data.numberOfInvoices)}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -451,11 +605,52 @@ const HouseRentalSimulator: React.FC = () => {
                     <div className="text-sm text-purple-700 space-y-1">
                       <div>{t('taxBase')} {formatCurrency(data.monthlyRent * data.rentalPeriod)}</div>
                       <div>{t('corporateRate')}</div>
-                      <div className="font-medium">{t('corporateRegime')}</div>
+                      <div className="font-medium">{t('corporateRegime')}</div>                        <div className="mt-2 pt-2 border-t border-purple-200">
+                        <div className="font-medium mb-1">Pró-labore (28% do faturamento):</div>
+                        <div>• Total no período: {formatCurrency(results.pj.prolabore?.amount || 0)}</div>
+                        <div>• INSS Total: {formatCurrency(results.pj.prolabore?.inss || 0)}</div>
+                        <div>• IRPF Total: {formatCurrency(results.pj.prolabore?.irpf || 0)}</div>
+                        
+                        <div className="mt-2 pt-1 border-t border-purple-200 text-xs">
+                          <div className="font-medium mb-1">Valores por nota fiscal:</div>
+                          <div>• Valor por nota: {formatCurrency((data.monthlyRent * data.rentalPeriod) / data.numberOfInvoices)}</div>
+                          <div>• Pró-labore por nota: {formatCurrency(results.pj.prolabore?.breakdown?.prolaborePerInvoice || 0)}</div>
+                          <div>• INSS por nota: {formatCurrency(results.pj.prolabore?.breakdown?.inssPerInvoice || 0)}</div>
+                          <div>• IRPF por nota: {formatCurrency(results.pj.prolabore?.breakdown?.irpfPerInvoice || 0)}</div>
+                          {data.numberOfInvoices > 1 && (
+                            <div className="text-green-600 font-medium mt-1">
+                              💡 {data.numberOfInvoices} notas totais = valores menores por nota = impostos otimizados
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   <div className="space-y-4">
+                    {/* Breakdown detalhado dos impostos PJ */}
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <h5 className="font-medium text-gray-800 mb-3">Composição dos Impostos PJ:</h5>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Simples Nacional (6%):</span>
+                          <span className="font-medium">{formatCurrency((data.monthlyRent * data.rentalPeriod) * 0.06)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">INSS Pró-labore:</span>
+                          <span className="font-medium">{formatCurrency(results.pj.prolabore?.inss || 0)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">IRPF Pró-labore:</span>
+                          <span className="font-medium">{formatCurrency(results.pj.prolabore?.irpf || 0)}</span>
+                        </div>
+                        <div className="border-t pt-2 flex justify-between font-semibold">
+                          <span>Total Impostos:</span>
+                          <span>{formatCurrency(results.pj.totalTax)}</span>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="flex justify-between items-center p-4 bg-red-50 rounded-lg border border-red-200">
                       <span className="font-medium text-gray-700">{t('totalTax')}</span>
                       <span className="text-xl font-bold text-red-600">

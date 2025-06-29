@@ -15,6 +15,8 @@ export const translations = {
     basicData: "📊 Dados Básicos",
     monthlyRent: "💰 Valor Bruto do Aluguel (R$/mês) *",
     rentalPeriod: "📅 Duração do Aluguel (meses) *",
+    numberOfInvoices: "📄 Número Total de Notas Fiscais (PJ)",
+    numberOfInvoicesHelper: "Total de notas para dividir todo o faturamento do período (ex: 4 notas para dividir R$ 40.000)",
     alternativeHousingCost: "🏠 Custo Total da Moradia Alternativa (R$) *",
     alternativeHousingHelper: "Valor total que você gastará com hospedagem durante todo o período",
     
@@ -42,8 +44,8 @@ export const translations = {
     taxBase: "Base de cálculo:",
     monthlyTax: "Imposto mensal:",
     progressiveTable: "Regime: Carnê-Leão (Tabela Progressiva)",
-    corporateRate: "Alíquota: 6% (Simples Nacional)",
-    corporateRegime: "Regime: Simples Nacional - Anexo III",
+    corporateRate: "Alíquota: 6% (Simples Nacional) + Pró-labore",
+    corporateRegime: "Regime: Simples Nacional - Anexo III + Impostos sobre Pró-labore",
     
     totalTax: "💸 Imposto Total",
     netRevenue: "💰 Receita Líquida",
@@ -60,8 +62,8 @@ export const translations = {
     // Recommendations
     recommendations: "💡 Recomendações",
     individualBetter: "✅ Pessoa Física é mais vantajosa: Com as deduções informadas, a tributação progressiva do Carnê-Leão resulta em menor imposto.",
-    corporateBetter: "✅ Pessoa Jurídica é mais vantajosa: A alíquota fixa de 6% do Simples Nacional é mais eficiente neste cenário.",
-    corporateReminder: "📋 Lembre-se: Para PJ, considere também custos de abertura, contabilidade (~R$ 200-500/mês) e obrigações fiscais adicionais.",
+    corporateBetter: "✅ Pessoa Jurídica é mais vantajosa: Mesmo com o pró-labore (28% do faturamento) e seus impostos (INSS + IRPF), a opção PJ ainda é mais eficiente neste cenário.",
+    corporateReminder: "📋 Lembre-se: Para PJ, considere também custos de abertura, contabilidade (~R$ 200-500/mês), obrigações fiscais e que 28% do faturamento será pró-labore (sujeito a INSS e IRPF).",
     consultAccountant: "⚖️ Consulte um contador: Esta simulação é apenas orientativa. Cada situação é única e requer análise profissional.",
     
     // Footer
@@ -89,6 +91,8 @@ export const translations = {
     basicData: "📊 Basic Data",
     monthlyRent: "💰 Gross Monthly Rent ($) *",
     rentalPeriod: "📅 Rental Duration (months) *",
+    numberOfInvoices: "📄 Total Number of Invoices (Corporate)",
+    numberOfInvoicesHelper: "Total invoices to split all period revenue (e.g.: 4 invoices to split $40,000)",
     alternativeHousingCost: "🏠 Total Alternative Housing Cost ($) *",
     alternativeHousingHelper: "Total amount you'll spend on accommodation during the entire period",
     
@@ -116,8 +120,8 @@ export const translations = {
     taxBase: "Tax base:",
     monthlyTax: "Monthly tax:",
     progressiveTable: "Method: Progressive Tax Table",
-    corporateRate: "Rate: 6% (Simplified Tax)",
-    corporateRegime: "Method: Simplified Corporate Tax",
+    corporateRate: "Rate: 6% (Simplified Tax) + Pro-labore",
+    corporateRegime: "Method: Simplified Corporate Tax + Pro-labore Taxes",
     
     totalTax: "💸 Total Tax",
     netRevenue: "💰 Net Revenue",
@@ -134,8 +138,8 @@ export const translations = {
     // Recommendations
     recommendations: "💡 Recommendations",
     individualBetter: "✅ Individual is more advantageous: With the informed deductions, progressive taxation results in lower taxes.",
-    corporateBetter: "✅ Corporate is more advantageous: The fixed 6% rate of simplified tax is more efficient in this scenario.",
-    corporateReminder: "📋 Remember: For corporate, also consider opening costs, accounting (~$200-500/month) and additional tax obligations.",
+    corporateBetter: "✅ Corporate is more advantageous: Even with pro-labore (28% of revenue) and its taxes (Social Security + Income Tax), the corporate option is still more efficient in this scenario.",
+    corporateReminder: "📋 Remember: For corporate, also consider opening costs, accounting (~$200-500/month), tax obligations, and that 28% of revenue will be pro-labore (subject to Social Security and Income Tax).",
     consultAccountant: "⚖️ Consult an accountant: This simulation is only for guidance. Each situation is unique and requires professional analysis.",
     
     // Footer
