@@ -114,7 +114,7 @@ export const NegotiationHelper = ({ data, language, t }: NegotiationHelperProps)
   // Generate scenarios for negotiation
   const generateNegotiationScenarios = (): NegotiationScenario[] => {
     const scenarios: NegotiationScenario[] = [];
-    const discountLevels = [0, 2.5, 5, 7.5, 10, 12.5, 15, 20];
+    const discountLevels = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
     
     discountLevels.forEach(discountPercent => {
       const newMonthlyRent = data.monthlyRent * (1 - discountPercent / 100);
@@ -160,6 +160,7 @@ export const NegotiationHelper = ({ data, language, t }: NegotiationHelperProps)
   };
 
   const minViableOffer = calculateMinimumViableOffer();
+  const maxDiscountPercent = ((data.monthlyRent - minViableOffer) / data.monthlyRent) * 100;
   const negotiationAnalysis = calculateNegotiationAnalysis();
   const scenarios = generateNegotiationScenarios();
 
@@ -278,45 +279,78 @@ export const NegotiationHelper = ({ data, language, t }: NegotiationHelperProps)
               </tr>
             </thead>
             <tbody>
-              {scenarios.map((scenario, index) => (
-                <tr key={index} className={`border-b ${
-                  scenario.decision === 'reject' ? 'bg-red-50' : 
-                  scenario.decision === 'excellent' ? 'bg-green-50' : ''
-                }`}>
-                  <td className="p-2 font-medium">
-                    {scenario.discountPercent.toFixed(1)}%
-                  </td>
-                  <td className="p-2">
-                    {formatCurrency(scenario.newMonthlyRent)}
-                  </td>
-                  <td className="p-2">
-                    {formatCurrency(scenario.newTotalRevenue)}
-                  </td>
-                  <td className="p-2">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      scenario.bestOption === 'individual' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-purple-100 text-purple-800'
-                    }`}>
-                      {t(scenario.bestOption)}
-                    </span>
-                  </td>
-                  <td className="p-2">
-                    <span className={scenario.bestProfit >= 0 ? 'text-green-600' : 'text-red-600'}>
-                      {formatCurrency(scenario.bestProfit)}
-                    </span>
-                  </td>
-                  <td className="p-2">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      scenario.decision === 'excellent' ? 'bg-green-100 text-green-800' :
-                      scenario.decision === 'acceptable' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {t(scenario.decision)}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {scenarios.map((scenario, index) => {
+                const isBelowMinimum = scenario.bestProfit < data.minimumDesiredProfit;
+                
+                return (
+                  <tr key={index} className={`border-b transition-colors hover:bg-gray-100 ${
+                    isBelowMinimum ? 'bg-red-100 hover:bg-red-200' : 
+                    scenario.decision === 'excellent' ? 'bg-green-100 hover:bg-green-200' : 
+                    'bg-yellow-100 hover:bg-yellow-200'
+                  }`}>
+                    <td className="p-2 font-medium">
+                      {scenario.discountPercent.toFixed(1)}%
+                      {scenario.discountPercent === 0 && (
+                        <span className="ml-2 text-xs bg-blue-300 text-blue-900 px-1 rounded font-bold">ATUAL</span>
+                      )}
+                      {scenario.discountPercent <= 10 && scenario.discountPercent > 0 && (
+                        <span className="ml-2 text-xs bg-green-300 text-green-900 px-1 rounded font-bold">ÓTIMO</span>
+                      )}
+                      {isBelowMinimum && (
+                        <span className="ml-2 text-xs bg-red-300 text-red-900 px-1 rounded font-bold">BAIXO</span>
+                      )}
+                    </td>
+                    <td className="p-2">
+                      {formatCurrency(scenario.newMonthlyRent)}
+                      <div className="text-xs text-gray-600">
+                        {scenario.discountPercent > 0 && `(-${formatCurrency((data.monthlyRent - scenario.newMonthlyRent) * data.rentalPeriod)})`}
+                      </div>
+                    </td>
+                    <td className="p-2">
+                      {formatCurrency(scenario.newTotalRevenue)}
+                    </td>
+                    <td className="p-2">
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${
+                        scenario.bestOption === 'individual' 
+                          ? 'bg-blue-200 text-blue-900' 
+                          : 'bg-purple-200 text-purple-900'
+                      }`}>
+                        {t(scenario.bestOption)}
+                      </span>
+                    </td>
+                    <td className="p-2">
+                      <span className={`font-bold ${
+                        scenario.bestProfit >= data.minimumDesiredProfit ? 'text-green-700' : 'text-red-700'
+                      }`}>
+                        {formatCurrency(scenario.bestProfit)}
+                      </span>
+                      <div className={`text-xs ${
+                        scenario.bestProfit >= data.minimumDesiredProfit ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {((scenario.bestProfit / data.minimumDesiredProfit) * 100).toFixed(0)}% da meta
+                      </div>
+                    </td>
+                    <td className="p-2">
+                      <span className={`px-3 py-1 rounded text-xs font-bold ${
+                        scenario.decision === 'excellent' ? 'bg-green-200 text-green-900' :
+                        scenario.decision === 'acceptable' ? 'bg-yellow-200 text-yellow-900' :
+                        'bg-red-200 text-red-900'
+                      }`}>
+                        {t(scenario.decision)}
+                      </span>
+                      {scenario.decision === 'excellent' && (
+                        <div className="text-xs text-green-700 mt-1 font-medium">✅ Aceite</div>
+                      )}
+                      {scenario.decision === 'acceptable' && (
+                        <div className="text-xs text-yellow-700 mt-1 font-medium">⚖️ Negocie</div>
+                      )}
+                      {scenario.decision === 'reject' && (
+                        <div className="text-xs text-red-700 mt-1 font-medium">❌ Recuse</div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -347,6 +381,46 @@ export const NegotiationHelper = ({ data, language, t }: NegotiationHelperProps)
             </div>
           </div>
           
+          {/* Tactical Analysis */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+              <strong>🎯 Zona de Conforto:</strong><br/>
+              <span className="text-lg font-bold text-indigo-700">
+                {formatCurrency(minViableOffer)} - {formatCurrency(data.monthlyRent * 0.95)}
+              </span>
+              <p className="text-sm text-gray-600 mt-1">Faixa ideal para iniciar negociações</p>
+            </div>
+            
+            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+              <strong>💡 Estratégia Recomendada:</strong><br/>
+              {negotiationAnalysis.discountPercent <= 10 && (
+                <span className="text-green-600 font-medium">Aceite rapidamente</span>
+              )}
+              {negotiationAnalysis.discountPercent > 10 && negotiationAnalysis.discountPercent <= 25 && (
+                <span className="text-blue-600 font-medium">Negocie termos extras</span>
+              )}
+              {negotiationAnalysis.discountPercent > 25 && (
+                <span className="text-orange-600 font-medium">Contra-oferte</span>
+              )}
+              <p className="text-sm text-gray-600 mt-1">
+                {negotiationAnalysis.discountPercent <= 10 && "Desconto baixo, boa oferta"}
+                {negotiationAnalysis.discountPercent > 10 && negotiationAnalysis.discountPercent <= 25 && "Peça prazo maior ou garantias"}
+                {negotiationAnalysis.discountPercent > 25 && "Desconto alto, reavalie"}
+              </p>
+            </div>
+            
+            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <strong>⚡ Poder de Barganha:</strong><br/>
+              <span className="text-lg font-bold text-yellow-700">
+                {((maxDiscountPercent - negotiationAnalysis.discountPercent) / maxDiscountPercent * 100).toFixed(0)}%
+              </span>
+              <p className="text-sm text-gray-600 mt-1">
+                {((maxDiscountPercent - negotiationAnalysis.discountPercent) / maxDiscountPercent * 100) > 50 ? 
+                  "Você tem vantagem" : "Negociação equilibrada"}
+              </p>
+            </div>
+          </div>
+          
           <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
             <strong>{t('sweetSpot')}:</strong> {' '}
             {t('sweetSpotDesc').replace('{amount}', formatCurrency(minViableOffer))}
@@ -355,6 +429,29 @@ export const NegotiationHelper = ({ data, language, t }: NegotiationHelperProps)
           <div className="p-4 bg-red-50 rounded-lg border border-red-200">
             <strong>{t('walkAway')}:</strong> {' '}
             {t('walkAwayDesc').replace('{amount}', formatCurrency(minViableOffer))}
+          </div>
+
+          {/* Advanced Negotiation Tactics */}
+          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <strong>🎨 Táticas Avançadas de Negociação:</strong>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+              <div className="text-sm">
+                <strong>Se pedirem mais de {((maxDiscountPercent * 0.7)).toFixed(1)}% desconto:</strong>
+                <ul className="list-disc list-inside text-gray-600 ml-2">
+                  <li>Proponha contrato mais longo</li>
+                  <li>Peça garantias adicionais</li>
+                  <li>Negocie reajustes anuais</li>
+                </ul>
+              </div>
+              <div className="text-sm">
+                <strong>Para fechar rapidamente:</strong>
+                <ul className="list-disc list-inside text-gray-600 ml-2">
+                  <li>Ofereça {(maxDiscountPercent * 0.3).toFixed(1)}% desconto</li>
+                  <li>Inclua benefícios extras</li>
+                  <li>Estabeleça prazo de decisão</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </div>

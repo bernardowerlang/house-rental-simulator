@@ -23,8 +23,8 @@ export const ViabilityAnalysis = ({ data, language, t }: ViabilityAnalysisProps)
   const calculateMaxReduction = () => {
     let maxDiscountPercent = 0;
     
-    // Binary search to find maximum discount that keeps profit above minimum desired
-    for (let discount = 0; discount <= 80; discount += 1) {
+    // Search in increments of 5% to find maximum discount that keeps profit above minimum desired
+    for (let discount = 0; discount <= 80; discount += 5) {
       const newMonthlyRent = data.monthlyRent * (1 - discount / 100);
       const newTotalRevenue = newMonthlyRent * data.rentalPeriod;
       const totalCosts = data.alternativeHousingCost + (data.monthlyCosts * data.rentalPeriod);
@@ -58,7 +58,7 @@ export const ViabilityAnalysis = ({ data, language, t }: ViabilityAnalysisProps)
   // Generate scenarios for different discount levels
   const generateScenarios = (): ViabilityScenario[] => {
     const scenarios: ViabilityScenario[] = [];
-    const discountLevels = [0, 5, 10, 15, 20, 25, 30];
+    const discountLevels = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80];
     
     discountLevels.forEach(discountPercent => {
       const newMonthlyRent = data.monthlyRent * (1 - discountPercent / 100);
@@ -175,47 +175,64 @@ export const ViabilityAnalysis = ({ data, language, t }: ViabilityAnalysisProps)
               </tr>
             </thead>
             <tbody>
-              {scenarios.map((scenario, index) => (
-                <tr key={index} className={`border-b ${!scenario.isViable ? 'bg-red-50' : ''}`}>
-                  <td className="p-2 font-medium">
-                    {scenario.discountPercent}%
-                  </td>
-                  <td className="p-2">
-                    {formatCurrency(scenario.newMonthlyRent)}
-                  </td>
-                  <td className="p-2">
-                    {formatCurrency(scenario.newTotalRevenue)}
-                  </td>
-                  <td className="p-2">
-                    <span className={scenario.newIndividualProfit >= 0 ? 'text-green-600' : 'text-red-600'}>
-                      {formatCurrency(scenario.newIndividualProfit)}
-                    </span>
-                  </td>
-                  <td className="p-2">
-                    <span className={scenario.newCorporateProfit >= 0 ? 'text-green-600' : 'text-red-600'}>
-                      {formatCurrency(scenario.newCorporateProfit)}
-                    </span>
-                  </td>
-                  <td className="p-2">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      scenario.bestOption === 'individual' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-purple-100 text-purple-800'
-                    }`}>
-                      {t(scenario.bestOption)}
-                    </span>
-                  </td>
-                  <td className="p-2">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      scenario.isViable 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {scenario.isViable ? t('yes') : t('no')}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {scenarios.map((scenario, index) => {
+                const bestProfit = Math.max(scenario.newIndividualProfit, scenario.newCorporateProfit);
+                const isBelowMinimum = bestProfit < data.minimumDesiredProfit;
+                
+                return (
+                  <tr key={index} className={`border-b transition-colors hover:bg-gray-100 ${
+                    isBelowMinimum ? 'bg-red-100 hover:bg-red-200' : 
+                    scenario.discountPercent === 0 ? 'bg-blue-100 hover:bg-blue-200' :
+                    scenario.discountPercent <= 15 ? 'bg-green-100 hover:bg-green-200' :
+                    scenario.discountPercent <= 30 ? 'bg-yellow-100 hover:bg-yellow-200' :
+                    'bg-orange-100 hover:bg-orange-200'
+                  }`}>
+                    <td className="p-2 font-medium">
+                      {scenario.discountPercent}%
+                      {scenario.discountPercent === 0 && (
+                        <span className="ml-2 text-xs bg-blue-300 text-blue-900 px-1 rounded font-bold">ORIGINAL</span>
+                      )}
+                      {isBelowMinimum && (
+                        <span className="ml-2 text-xs bg-red-300 text-red-900 px-1 rounded font-bold">BAIXO</span>
+                      )}
+                    </td>
+                    <td className="p-2">
+                      {formatCurrency(scenario.newMonthlyRent)}
+                    </td>
+                    <td className="p-2">
+                      {formatCurrency(scenario.newTotalRevenue)}
+                    </td>
+                    <td className="p-2">
+                      <span className={scenario.newIndividualProfit >= 0 ? 'text-green-700 font-medium' : 'text-red-700 font-medium'}>
+                        {formatCurrency(scenario.newIndividualProfit)}
+                      </span>
+                    </td>
+                    <td className="p-2">
+                      <span className={scenario.newCorporateProfit >= 0 ? 'text-green-700 font-medium' : 'text-red-700 font-medium'}>
+                        {formatCurrency(scenario.newCorporateProfit)}
+                      </span>
+                    </td>
+                    <td className="p-2">
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${
+                        scenario.bestOption === 'individual' 
+                          ? 'bg-blue-200 text-blue-900' 
+                          : 'bg-purple-200 text-purple-900'
+                      }`}>
+                        {t(scenario.bestOption)}
+                      </span>
+                    </td>
+                    <td className="p-2">
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${
+                        scenario.isViable 
+                          ? 'bg-green-200 text-green-900' 
+                          : 'bg-red-200 text-red-900'
+                      }`}>
+                        {scenario.isViable ? t('yes') : t('no')}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -236,14 +253,69 @@ export const ViabilityAnalysis = ({ data, language, t }: ViabilityAnalysisProps)
                 </>
               ) : (
                 <>
-                  <span className="text-green-600 font-medium">{t('optimalStrategy')}</span> - {t('marketingTipDesc')}
+                  <span className="text-green-600 font-medium">{t('optimalStrategy')}</span> - {' '}
+                  {maxDiscountPercent > 25 ? 
+                    `${t('marketingTipDesc')} Você pode oferecer até ${maxDiscountPercent.toFixed(1)}% de desconto!` :
+                    t('marketingTipDesc')
+                  }
                 </>
               )}
             </div>
             
             <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-              <strong>{t('marketingTip')}:</strong> {t('marketingTipDesc')}
+              <strong>{t('marketingTip')}:</strong> {' '}
+              {maxDiscountPercent > 15 ? 
+                `Com ${maxDiscountPercent.toFixed(1)}% de margem, você pode ser agressivo nas negociações.` :
+                'Margem moderada - negocie cuidadosamente.'
+              }
             </div>
+          </div>
+          
+          {/* Additional Strategic Analysis */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <strong>📈 Ponto de Equilíbrio:</strong><br/>
+              <span className="text-lg font-bold text-yellow-700">
+                {formatCurrency(data.minimumDesiredProfit / data.rentalPeriod)}
+              </span>
+              <p className="text-sm text-gray-600 mt-1">Aluguel mínimo mensal para atingir sua meta</p>
+            </div>
+            
+            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <strong>🎯 Taxa de Lucro:</strong><br/>
+              <span className="text-lg font-bold text-purple-700">
+                {((data.minimumDesiredProfit / (data.monthlyRent * data.rentalPeriod)) * 100).toFixed(1)}%
+              </span>
+              <p className="text-sm text-gray-600 mt-1">Margem de lucro desejada sobre receita bruta</p>
+            </div>
+            
+            <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+              <strong>💼 Flexibilidade Total:</strong><br/>
+              <span className="text-lg font-bold text-indigo-700">
+                {formatCurrency(maxDiscountAmount)}
+              </span>
+              <p className="text-sm text-gray-600 mt-1">Valor total que pode ser negociado</p>
+            </div>
+          </div>
+
+          {/* Risk Analysis */}
+          <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+            <strong>⚠️ Análise de Risco:</strong><br/>
+            {maxDiscountPercent < 10 && (
+              <span className="text-red-600">
+                Margem muito apertada! Qualquer imprevisto pode comprometer a lucratividade.
+              </span>
+            )}
+            {maxDiscountPercent >= 10 && maxDiscountPercent < 25 && (
+              <span className="text-orange-600">
+                Margem moderada. Tenha uma reserva para imprevistos de pelo menos 10% do valor total.
+              </span>
+            )}
+            {maxDiscountPercent >= 25 && (
+              <span className="text-green-600">
+                Boa margem de segurança! Você pode absorver imprevistos e ser flexível nas negociações.
+              </span>
+            )}
           </div>
         </div>
       </div>
