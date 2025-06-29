@@ -44,6 +44,7 @@ export const ptTranslations = {
   bestOption: "Melhor Opção:",
   individual: "Pessoa Física",
   corporate: "Pessoa Jurídica",
+  netProfit: "Lucro Líquido",
   savingsCompared: "Economia de {amount} comparado à outra opção",
   
   // Tax Cards

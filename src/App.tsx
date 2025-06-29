@@ -4,6 +4,8 @@ import { useTranslation } from './hooks/useTranslation';
 import { useRentalCalculations } from './hooks/useRentalCalculations';
 import { InputForm } from './components/InputForm';
 import { ComparisonPanel } from './components/ComparisonPanel';
+import { ViabilityAnalysis } from './components/ViabilityAnalysis';
+import { NegotiationHelper } from './components/NegotiationHelper';
 import { RentalData, InputValues, TabType } from './types';
 import { parseNumberInput, parseCurrencyInput } from './utils/calculations';
 
@@ -214,25 +216,19 @@ const HouseRentalSimulator: React.FC = () => {
         )}
 
         {activeTab === 'viability' && (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              {t('viabilityAnalysis')} - Em Desenvolvimento
-            </h2>
-            <p className="text-gray-600">
-              Esta seção será implementada em breve com a análise de viabilidade refatorada.
-            </p>
-          </div>
+          <ViabilityAnalysis
+            data={data}
+            language={language}
+            t={t}
+          />
         )}
 
         {activeTab === 'negotiation' && (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              {t('negotiationHelper')} - Em Desenvolvimento
-            </h2>
-            <p className="text-gray-600">
-              Esta seção será implementada em breve com o assistente de negociação refatorado.
-            </p>
-          </div>
+          <NegotiationHelper
+            data={data}
+            language={language}
+            t={t}
+          />
         )}
 
         {/* Footer */}

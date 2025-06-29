@@ -44,6 +44,7 @@ export const enTranslations = {
   bestOption: "Best Option:",
   individual: "Individual",
   corporate: "Corporate",
+  netProfit: "Net Profit",
   savingsCompared: "Savings of {amount} compared to the other option",
   
   // Tax Cards
