@@ -300,7 +300,8 @@ const HouseRentalSimulator: React.FC = () => {
     // Calculate what monthly rent would result in zero profit
     const breakEvenAnalysis = [];
     
-    for (let reduction = 0; reduction <= 50; reduction += 5) {
+    // Expand analysis to show more scenarios, going deeper into negative territory
+    for (let reduction = 0; reduction <= 80; reduction += 5) {
       const reducedRent = data.monthlyRent * (1 - reduction / 100);
       const totalGrossIncome = reducedRent * data.rentalPeriod;
       
@@ -328,7 +329,7 @@ const HouseRentalSimulator: React.FC = () => {
         totalTax,
         netIncome,
         finalProfit,
-        isViable: finalProfit >= 0
+        isViable: finalProfit >= data.minimumDesiredProfit
       });
     }
     
@@ -345,7 +346,7 @@ const HouseRentalSimulator: React.FC = () => {
       maxReduction: lastViable?.reduction || 0,
       minViableRent: lastViable?.reducedRent || data.monthlyRent,
       maxReductionAmount: data.monthlyRent - (lastViable?.reducedRent || data.monthlyRent),
-      breakEvenPoint: firstNonViable?.reduction || 50
+      breakEvenPoint: firstNonViable?.reduction || 80
     };
   };
 
@@ -393,8 +394,8 @@ const HouseRentalSimulator: React.FC = () => {
     const scenarios = [];
     const originalTotal = data.monthlyRent * data.rentalPeriod;
     
-    // Add some negotiation scenarios
-    const reductionAmounts = [0, 2000, 5000, 8000, 10000, 15000, 20000];
+    // Add some negotiation scenarios - expanded range to show more scenarios
+    const reductionAmounts = [0, 2000, 5000, 8000, 10000, 15000, 20000, 25000, 30000, 35000, 40000];
     
     for (const reduction of reductionAmounts) {
       const newTotal = originalTotal - reduction;
@@ -1249,6 +1250,16 @@ const HouseRentalSimulator: React.FC = () => {
                             {language === 'pt'
                               ? `Use ${results.bestOption === 'pf' ? 'Pessoa Física' : 'Pessoa Jurídica'} para maximizar lucros neste cenário.`
                               : `Use ${results.bestOption === 'pf' ? 'Individual' : 'Corporate'} to maximize profits in this scenario.`
+                            }
+                          </p>
+                        </div>
+
+                        <div className="p-4 bg-orange-50 border-l-4 border-orange-400 rounded">
+                          <h5 className="font-medium text-orange-800 mb-2">🚨 {language === 'pt' ? 'Ponto de Alerta' : 'Warning Point'}</h5>
+                          <p className="text-orange-700 text-sm">
+                            {language === 'pt'
+                              ? `Reduções acima de ${viabilityData.maxReduction}% resultam em prejuízo. Cenários em vermelho na tabela mostram operações inviáveis.`
+                              : `Reductions above ${viabilityData.maxReduction}% result in losses. Red scenarios in the table show unviable operations.`
                             }
                           </p>
                         </div>
