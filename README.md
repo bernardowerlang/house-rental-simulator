@@ -268,7 +268,20 @@ Contribuições são bem-vindas! Sinta-se à vontade para:
 4. Fazer push para a branch (`git push origin feature/MinhaFeature`)
 5. Abrir um Pull Request
 
-### 👨‍💻 Autor
+### � Estrutura do Projeto
+
+```
+src/
+├── components/          # Componentes React reutilizáveis
+├── hooks/              # Hooks customizados (cálculos e i18n)
+├── i18n/               # Sistema de internacionalização
+├── types/              # Tipos TypeScript
+├── utils/              # Funções utilitárias
+├── constants/          # Constantes e tabelas tributárias
+└── App.tsx             # Componente principal
+```
+
+### �👨‍💻 Autor
 
 Desenvolvido por Bernardo Werlang
 
