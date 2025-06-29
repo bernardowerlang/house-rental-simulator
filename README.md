@@ -106,17 +106,6 @@ npm run dev
 - **Lucide React** for beautiful icons
 - **Custom i18n** implementation
 
-### 📈 Future Features
-
-- [ ] Historical tax rate tracking
-- [ ] PDF report generation with detailed breakdown
-- [ ] Scenario comparison (side-by-side multiple simulations)
-- [ ] Advanced tax optimization strategies
-- [ ] Real estate market integration
-- [ ] Monthly cash flow projections
-- [ ] Tax calendar and deadlines
-- [ ] Multi-property portfolio analysis
-
 ### 🤝 Contributions
 
 Contributions are welcome! Feel free to:
@@ -126,10 +115,6 @@ Contributions are welcome! Feel free to:
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
-### 📝 License
-
-This project is under the MIT license. See the LICENSE file for more details.
 
 ### 👨‍💻 Author
 
@@ -241,17 +226,6 @@ npm run dev
 - **Lucide React** para ícones bonitos
 - **Implementação i18n** personalizada
 
-### 📈 Funcionalidades Futuras
-
-- [ ] Acompanhamento histórico de alíquotas tributárias
-- [ ] Geração de relatórios PDF com breakdown detalhado
-- [ ] Comparação de cenários (múltiplas simulações lado a lado)
-- [ ] Estratégias avançadas de otimização tributária
-- [ ] Integração com mercado imobiliário
-- [ ] Projeções de fluxo de caixa mensal
-- [ ] Calendário tributário e prazos
-- [ ] Análise de portfólio multi-imóveis
-
 ### 🤝 Contribuições
 
 Contribuições são bem-vindas! Sinta-se à vontade para:
@@ -261,10 +235,6 @@ Contribuições são bem-vindas! Sinta-se à vontade para:
 3. Fazer commit das mudanças (`git commit -m 'Adiciona MinhaFeature'`)
 4. Fazer push para a branch (`git push origin feature/MinhaFeature`)
 5. Abrir um Pull Request
-
-### 📝 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo LICENSE para mais detalhes.
 
 ### 👨‍💻 Autor
 
