@@ -354,9 +354,6 @@ const HouseRentalSimulator: React.FC = () => {
     const totalCosts = data.alternativeHousingCost + (data.monthlyCosts * data.rentalPeriod);
     const bestTaxRegime = results.bestOption;
     
-    // Calculate minimum total rent needed to achieve desired profit
-    const targetNetIncome = data.minimumDesiredProfit + totalCosts;
-    
     // Binary search to find minimum rent that achieves target profit
     let minRent = 0;
     let maxRent = data.monthlyRent * 2;
